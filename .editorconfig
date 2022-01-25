@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# CA1416: Проверка совместимости платформы
+dotnet_diagnostic.CA1416.severity = none
+
+# CS1998: В асинхронном методе отсутствуют операторы await, будет выполнен синхронный метод
+dotnet_diagnostic.CS1998.severity = silent
