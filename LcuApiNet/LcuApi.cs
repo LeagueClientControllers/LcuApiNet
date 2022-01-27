@@ -1,9 +1,16 @@
 ﻿using LcuApiNet.Categories;
 using LcuApiNet.Core;
 using LcuApiNet.Exceptions;
+using LcuApiNet.Model;
 using LcuApiNet.Model.Enums;
 using LcuApiNet.ValueListeners;
+
+using Newtonsoft.Json;
+
+using System.Diagnostics;
+using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Text;
 
 namespace LcuApiNet
@@ -23,11 +30,15 @@ namespace LcuApiNet
         /// <inheritdoc />
         public ValuesCategory Values { get; }
 
+        /// <inheritdoc />
+        public MatchmakingCategory Matchmaking { get; }
+
         public LcuApi()
         {
             GameflowPhaseListener = new GameflowPhaseListener(this);
 
             Values = new ValuesCategory(this);
+            Matchmaking = new MatchmakingCategory(this);
 
             Client = new LeagueClientManager();
             Client.StateChanged += (o, e) => {
@@ -67,28 +78,31 @@ namespace LcuApiNet
 
             string? responseBody = null;
             Uri url = new Uri(_baseUrl!, commandPath);
+            HttpRequestMessage requestMessage = new HttpRequestMessage(method, url);
             using (HttpClientHandler handler = new HttpClientHandler()) {
                 handler.ClientCertificateOptions = ClientCertificateOption.Manual;
                 handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
                 
                 using (HttpClient client = new HttpClient(handler)) {
                     client.DefaultRequestHeaders.Authorization = _requestAuthorizationHeader;
-                    if (method == HttpMethod.Get) {
-                        responseBody = await client.GetStringAsync(url, token).ConfigureAwait(false);
-                    } else if (method == HttpMethod.Post) {
-                    
-                    } else if (method == HttpMethod.Put) {
+                    try {
+                        HttpResponseMessage response = await client.SendAsync(requestMessage);
+                        responseBody = await response.Content.ReadAsStringAsync(token).ConfigureAwait(false);
+                        
+                        if (!response.IsSuccessStatusCode) {
+                            ApiError? error = JsonConvert.DeserializeObject<ApiError>(responseBody);
+                            if (error == null) {
+                                throw new WrongResponseException("Request completed with unsuccessful status code but no error details provided");
+                            }
 
-                    } else if (method == HttpMethod.Delete) {
+                            throw new ApiCommandException(error);
+                        }
+                    } catch (HttpRequestException e) {
+                        if (e.InnerException is SocketException sE && sE.SocketErrorCode == SocketError.ConnectionRefused) {
+                            throw new ApiServerUnreachableException();
+                        }
 
-                    } else if (method == HttpMethod.Head) { 
-                
-                    } else if (method == HttpMethod.Patch) {
-
-                    } else if (method == HttpMethod.Options) {
-
-                    } else if (method == HttpMethod.Trace) {
-
+                        throw e;
                     }
                 }
             }

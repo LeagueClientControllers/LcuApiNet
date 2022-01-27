@@ -24,6 +24,6 @@ namespace LcuApiNet.ValueListeners
         /// </summary>
         /// <param name="pendingRate">Duration of the period of time between requests in milliseconds.</param>
         /// <param name="token">Token that allows to cancel current task and listening process</param>
-        Task StartListeningAsync(int pendingRate = 100, CancellationToken token = default);
+        Task StartListeningAsync(int pendingRate = 200, CancellationToken token = default);
     }
 }

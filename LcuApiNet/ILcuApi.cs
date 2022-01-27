@@ -24,6 +24,11 @@ namespace LcuApiNet
         /// Api category for retrieve client values.
         /// </summary>
         ValuesCategory Values { get; }
+        
+        /// <summary>
+        /// Api category for matchmaking control.
+        /// </summary>
+        MatchmakingCategory Matchmaking { get; }
 
         /// <summary>
         /// Initializes api module.
@@ -39,6 +44,10 @@ namespace LcuApiNet
         /// </summary>
         /// <param name="methodPath">Relative path to the client command.</param>
         /// <param name="method">HTTP method required.</param>
+        /// <exception cref="LcuApiNet.Exceptions.ClientNotReadyException"></exception>
+        /// <exception cref="LcuApiNet.Exceptions.ApiServerUnreachableException"></exception>
+        /// <exception cref="LcuApiNet.Exceptions.WrongResponseException"></exception>
+        /// <exception cref="LcuApiNet.Exceptions.ApiCommandException"></exception>
         /// <returns>Command string response.</returns>
         Task<string> ExecuteAsync(string commandPath, HttpMethod method, CancellationToken token = default);
     }

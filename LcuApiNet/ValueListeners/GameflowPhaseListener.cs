@@ -1,4 +1,5 @@
 ﻿using LcuApiNet.EventHandlers;
+using LcuApiNet.Exceptions;
 using LcuApiNet.Model.Enums;
 
 namespace LcuApiNet.ValueListeners
@@ -6,9 +7,18 @@ namespace LcuApiNet.ValueListeners
     public class GameflowPhaseListener : IObservableValueListener<GameflowPhase?>
     {
         private ILcuApi _api;
+        private GameflowPhase? _value = null;
 
         /// <inheritdoc />
-        public GameflowPhase? Value { get; private set; } = null;
+        public GameflowPhase? Value { 
+            get => _value;
+            private set {
+                if (value != _value) {
+                    _value = value;
+                    ValueChanged?.Invoke(this, new ObservableValueChangedEventArgs<GameflowPhase?>(value));
+                }
+            }
+        }
 
         /// <inheritdoc />
         public event ObservableValueChanged<GameflowPhase?>? ValueChanged;
@@ -29,14 +39,21 @@ namespace LcuApiNet.ValueListeners
         private async Task ListeningProcess(int pendingRate, CancellationToken token = default)
         {
             while (!token.IsCancellationRequested) {
-                GameflowPhase phase = await _api.Values.GetGameflowPhase();
-                if (Value != phase) {
-                    Value = phase;
-                    ValueChanged?.Invoke(this, new ObservableValueChangedEventArgs<GameflowPhase?>(phase));
+                try {
+                    GameflowPhase phase = await _api.Values.GetGameflowPhase();
+                    if (Value != phase) {
+                        Value = phase;
+                    }
+                } catch (ApiServerUnreachableException) {
+                    if (Value != null) {
+                        Value = null;
+                    }
                 }
 
                 await Task.Delay(pendingRate);
             }
+
+            Value = null;
         }
     }
 }
