@@ -36,8 +36,18 @@
         InProgress,
 
         /// <summary>
+        /// Waiting for post game stats.
+        /// </summary>
+        WaitingForStats,
+
+        /// <summary>
         /// When game is ended but user has not returned to the lobby yet.
         /// </summary>
-        PreEndOfGame
+        PreEndOfGame,
+
+        /// <summary>
+        /// Game is ended.
+        /// </summary>
+        EndOfGame
     }
 }
