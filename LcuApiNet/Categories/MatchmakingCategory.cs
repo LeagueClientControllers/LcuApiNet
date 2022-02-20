@@ -18,9 +18,9 @@ namespace LcuApiNet.Categories
         public async Task AcceptMatchAsync(CancellationToken token = default)
         {
             try {
-                await _api.ExecuteAsync("lol-matchmaking/v1/ready-check/accept", HttpMethod.Post, token);
+                await _api.Socket.ExecuteAsync("/lol-matchmaking/v1/ready-check/accept", HttpMethod.Post);
             } catch (ApiCommandException e) {
-                if (e.Details.Code == ErrorCode.RPC_ERROR && e.Details.Message == "Not attached to a matchmaking queue.") {
+                if (e.Details.Code == ErrorCode.InternalError && e.Details.Message == "Not attached to a matchmaking queue.") {
                     throw new NotAttachedToQueueException();
                 }
 
@@ -31,9 +31,9 @@ namespace LcuApiNet.Categories
         public async Task DeclineMatchAsync(CancellationToken token = default)
         {
             try {
-                await _api.ExecuteAsync("lol-matchmaking/v1/ready-check/decline", HttpMethod.Post, token);
+                await _api.Socket.ExecuteAsync("/lol-matchmaking/v1/ready-check/decline", HttpMethod.Post);
             } catch (ApiCommandException e) {
-                if (e.Details.Code == ErrorCode.RPC_ERROR && e.Details.Message == "Not attached to a matchmaking queue.") {
+                if (e.Details.Code == ErrorCode.InternalError && e.Details.Message == "Not attached to a matchmaking queue.") {
                     throw new NotAttachedToQueueException();
                 }
 

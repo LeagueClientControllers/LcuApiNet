@@ -15,12 +15,13 @@ namespace LcuApiNet.Core
         private const string CLIENT_EXECUTABLE_FILE_NAME = $"{CLIENT_EXECUTABLE_NAME}.exe";
         
         private bool _isReady = false;
+        private ILcuApi _api;
         
         /// <summary>
         /// Fires when the <see cref="IsReady"/> value is changed.
         /// </summary>
         public event ClientStateChanged? StateChanged;
-
+        
         /// <summary>
         /// Determines if league client is ready to receive api requests.
         /// Null value means that client location was not found
@@ -41,6 +42,11 @@ namespace LcuApiNet.Core
         /// </summary>
         internal LcuCredentials? Credentials { get; private set; }
 
+        public LeagueClientManager(ILcuApi api)
+        {
+            _api = api;
+        }
+
         /// <summary>
         /// Get the installation folder of the league client.
         /// This process will continue to run until league client is loaded.
@@ -51,7 +57,6 @@ namespace LcuApiNet.Core
             if (_clientLocation != null) {
                 return _clientLocation;
             }
-
 
             _clientLaunched = new TaskCompletionSource();
             WatchClientLaunched(pendingRate);
@@ -72,23 +77,26 @@ namespace LcuApiNet.Core
             }
 
             string lockfilePath = Path.Combine(clientLocation, "lockfile");
-            if (File.Exists(lockfilePath)) {
+            if (File.Exists(lockfilePath) && Process.GetProcessesByName(CLIENT_EXECUTABLE_NAME).Length != 0) {
                 Credentials = await ParseCredentialsAsync(lockfilePath).ConfigureAwait(false);
+                await _api.Socket.ConnectAsync(Credentials).ConfigureAwait(false);
                 IsReady = true;
-            }
-
+            } 
             _clientLockfileWatcher = new FileSystemWatcher(clientLocation, "lockfile");
             _clientLockfileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastAccess;
             _clientLockfileWatcher.EnableRaisingEvents = true;
-            
+        
             _clientLockfileWatcher.Error += 
                 (_, e) => throw e.GetException();
 
             _clientLockfileWatcher.Created += 
                 async (_, _) => await LockfileCreated(lockfilePath).ConfigureAwait(false);
-            
+
+            _clientLockfileWatcher.Changed += 
+                async (_, _) => await LockfileChanged(lockfilePath).ConfigureAwait(false);
+        
             _clientLockfileWatcher.Deleted += 
-                (_, _) => LockfileDeleted();
+                async (_, _) => await LockfileDeleted().ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -125,13 +133,29 @@ namespace LcuApiNet.Core
 
         private async Task LockfileCreated(string lockfilePath)
         {
+            Console.WriteLine("Lock file created");
             Credentials = await ParseCredentialsAsync(lockfilePath).ConfigureAwait(false);
+            await _api.Socket.ConnectAsync(Credentials).ConfigureAwait(false);
+            _api.Events.ResubscribeAll();
             IsReady = true;
         }
-
-        private void LockfileDeleted()
+        
+        private async Task LockfileChanged(string lockfilePath)
         {
+            Console.WriteLine("Lock file changed");
+            if (!IsReady) {
+                Credentials = await ParseCredentialsAsync(lockfilePath).ConfigureAwait(false);
+                await _api.Socket.ConnectAsync(Credentials).ConfigureAwait(false);
+                _api.Events.ResubscribeAll();
+                IsReady = true;
+            }
+        }
+        
+        private async Task LockfileDeleted()
+        {
+            Console.WriteLine("Lock file deleted");
             Credentials = null;
+            await _api.Socket.DisconnectAsync().ConfigureAwait(false);
             IsReady = false;
         }
 
@@ -143,6 +167,8 @@ namespace LcuApiNet.Core
 
                 lockfileContent = await lockfileReader.ReadToEndAsync().ConfigureAwait(false);
             }
+
+            Console.WriteLine($"[ParseCredentialsAsync] lockfileContent = {lockfileContent}");
 
             return LcuCredentials.FromString(lockfileContent);
         }

@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LcuApiNetConsoleTest", "..\..\C#\Console\LcuApiNetConsoleTest\LcuApiNetConsoleTest\LcuApiNetConsoleTest.csproj", "{7C1C18DF-3CC1-4F2C-A1DF-547A315C378A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{529BDADC-9C8B-447D-8993-09B33B40A18B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{529BDADC-9C8B-447D-8993-09B33B40A18B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{529BDADC-9C8B-447D-8993-09B33B40A18B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C1C18DF-3CC1-4F2C-A1DF-547A315C378A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C1C18DF-3CC1-4F2C-A1DF-547A315C378A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C1C18DF-3CC1-4F2C-A1DF-547A315C378A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C1C18DF-3CC1-4F2C-A1DF-547A315C378A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

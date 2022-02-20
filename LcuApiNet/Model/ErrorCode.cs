@@ -5,6 +5,6 @@
     /// </summary>
     public enum ErrorCode
     {
-        RPC_ERROR
+        InternalError
     }
 }

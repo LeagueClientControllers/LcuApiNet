@@ -20,6 +20,7 @@
         /// </summary>
         Matchmaking,
 
+        CheckedIntoTournament,
         /// <summary>
         /// User should accept or decline match.
         /// </summary>
@@ -31,9 +32,24 @@
         ChampSelect,
 
         /// <summary>
+        /// 
+        /// </summary>
+        GameStart,
+
+        /// <summary>
+        /// 
+        /// </summary>
+        FailedToLaunch,
+
+        /// <summary>
         /// Game in progress.
         /// </summary>
         InProgress,
+
+        /// <summary>
+        /// 
+        /// </summary>
+        Reconnect,
 
         /// <summary>
         /// Waiting for post game stats.
@@ -48,6 +64,11 @@
         /// <summary>
         /// Game is ended.
         /// </summary>
-        EndOfGame
+        EndOfGame,
+
+        /// <summary>
+        /// 
+        /// </summary>
+        TerminatedInError
     }
 }

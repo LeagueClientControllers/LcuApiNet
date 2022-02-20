@@ -1,6 +1,8 @@
 ﻿using LcuApiNet.Exceptions;
 using LcuApiNet.Model.Enums;
 using System.Text.RegularExpressions;
+using Websocket.Client;
+using System.Net.WebSockets;
 
 namespace LcuApiNet.Categories
 {
@@ -24,15 +26,15 @@ namespace LcuApiNet.Categories
         /// <returns>Current <see cref="GameflowPhase"/></returns>
         public async Task<GameflowPhase> GetGameflowPhase(CancellationToken token = default)
         {
-            string phaseString = await _api.ExecuteAsync("lol-gameflow/v1/gameflow-phase", HttpMethod.Get, token).ConfigureAwait(false);
+            string phaseString = await _api.Socket.ExecuteAsync("/lol-gameflow/v1/gameflow-phase", HttpMethod.Get).ConfigureAwait(false);
             
             try {
                 GameflowPhase phase = (GameflowPhase)Enum.Parse(typeof(GameflowPhase), _rQuote.Replace(phaseString, ""));
                 return phase;
             } catch (ArgumentException) {
-                throw new WrongResponseException($"Command [lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
+                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
             } catch (OverflowException) {
-                throw new WrongResponseException($"Command [lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
+                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
             }
         }
     }

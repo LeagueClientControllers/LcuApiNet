@@ -8,17 +8,10 @@ namespace LcuApiNet.Model
     /// </summary>
     public class ApiError
     {
-        [JsonProperty("errorCode")]
-        [JsonConverter(typeof(StringEnumConverter))]
-        public ErrorCode Code { get; set; }
-        
-        [JsonProperty("httpStatus")]
-        public int HttpStatus { get; set; }
+        public ErrorCode Code { get; }
+        public string Message { get; }
 
-        [JsonProperty("implementationDetails")]
-        public Dictionary<dynamic, dynamic> ImplementationDetails { get; set; } = null!;
-
-        [JsonProperty("message")]
-        public string Message { get; set; } = null!;
+        public ApiError(ErrorCode code, string message) =>
+            (Code, Message) = (code, message);
     }
 }

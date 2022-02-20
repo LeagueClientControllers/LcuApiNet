@@ -32,11 +32,13 @@ namespace LcuApiNet.Model
         /// <returns>Credentials object</returns>
         public static LcuCredentials FromString(string credentials)
         {
+            Console.WriteLine($"[{credentials}] {DateTime.Now:HH:mm:ss:ffff}");
+
             string[] splitted = credentials.Split(':');
             if (splitted.Length != 5) {
                 throw new IncorrectCredentialsException(credentials);
             }
-
+            
             try {
                 return new LcuCredentials(
                     Convert.ToInt32(splitted[2]), splitted[3], splitted[4]);
