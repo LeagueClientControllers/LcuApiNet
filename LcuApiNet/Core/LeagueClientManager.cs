@@ -80,8 +80,10 @@ namespace LcuApiNet.Core
             if (File.Exists(lockfilePath) && Process.GetProcessesByName(CLIENT_EXECUTABLE_NAME).Length != 0) {
                 Credentials = await ParseCredentialsAsync(lockfilePath).ConfigureAwait(false);
                 await _api.Socket.ConnectAsync(Credentials).ConfigureAwait(false);
+                _api.Events.ResubscribeAll();
                 IsReady = true;
             } 
+
             _clientLockfileWatcher = new FileSystemWatcher(clientLocation, "lockfile");
             _clientLockfileWatcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastAccess;
             _clientLockfileWatcher.EnableRaisingEvents = true;

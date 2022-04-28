@@ -32,9 +32,9 @@ namespace LcuApiNet.Categories
                 GameflowPhase phase = (GameflowPhase)Enum.Parse(typeof(GameflowPhase), _rQuote.Replace(phaseString, ""));
                 return phase;
             } catch (ArgumentException) {
-                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
+                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}].");
             } catch (OverflowException) {
-                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}]");
+                throw new WrongResponseException($"Command [/lol-gameflow/v1/gameflow-phase] returned unrecognizable game flow phase - [{phaseString}].");
             }
         }
     }

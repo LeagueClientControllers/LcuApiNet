@@ -35,15 +35,13 @@ namespace LcuApiNet
         /// <inheritdoc />
         public MatchmakingCategory Matchmaking { get; }
 
-        public LobbyCategory Lobby { get; }
-
+        /// <inheritdoc />
         public LeagueEventService Events { get; }
 
         public LcuApi()
         {
             Values      = new ValuesCategory(this);
             Matchmaking = new MatchmakingCategory(this);
-            Lobby       = new LobbyCategory(this);
             Socket      = new WampSocketManager();
             Client      = new LeagueClientManager(this);
             Events      = new LeagueEventService(this);

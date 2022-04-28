@@ -20,11 +20,13 @@ namespace LcuApiNet.Categories
             try {
                 await _api.Socket.ExecuteAsync("/lol-matchmaking/v1/ready-check/accept", HttpMethod.Post);
             } catch (ApiCommandException e) {
-                if (e.Details.Code == ErrorCode.InternalError && e.Details.Message == "Not attached to a matchmaking queue.") {
+                if (e.Details.Code == ErrorCode.InternalError && (
+                    e.Details.Message == "Not attached to a matchmaking queue." ||
+                    e.Details.Message == "Failed to accept team builder ready check: Error response for POST /lol-lobby-team-builder/v1/ready-check/accept: Cannot accept team builder AFK check because the current phase is: MATCHMAKING")) {
                     throw new NotAttachedToQueueException();
                 }
 
-                throw new WrongResponseException("When accepting a match only RPC error can occur");
+                throw new WrongResponseException("When accepting a match wrong exception arrived.");
             }
         }
 
@@ -33,11 +35,13 @@ namespace LcuApiNet.Categories
             try {
                 await _api.Socket.ExecuteAsync("/lol-matchmaking/v1/ready-check/decline", HttpMethod.Post);
             } catch (ApiCommandException e) {
-                if (e.Details.Code == ErrorCode.InternalError && e.Details.Message == "Not attached to a matchmaking queue.") {
+                if (e.Details.Code == ErrorCode.InternalError && (
+                    e.Details.Message == "Not attached to a matchmaking queue." || 
+                    e.Details.Message == "Failed to decline team builder ready check: Error response for POST /lol-lobby-team-builder/v1/ready-check/decline: Cannot decline team builder AFK check because the current phase is: MATCHMAKING")) {
                     throw new NotAttachedToQueueException();
                 }
 
-                throw new WrongResponseException("When declining a match only RPC error can occur");
+                throw new WrongResponseException("When declining a match wrong exception arrived.");
             }
         }
     }

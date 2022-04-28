@@ -34,11 +34,6 @@ namespace LcuApiNet
         /// <summary>
         /// 
         /// </summary>
-        LobbyCategory Lobby { get; }
-        
-        /// <summary>
-        /// 
-        /// </summary>
         LeagueEventService Events { get;  }
 
         /// <summary>
