@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using LcuApiNet.Model.ClientModels;
 
 namespace LcuApiNet.Core.Events
 {
@@ -26,6 +27,9 @@ namespace LcuApiNet.Core.Events
 
         [LeagueEventRepeater(LeagueEventType.LobbyInfoChanged, "OnJsonApiEvent_lol-lobby_v2_lobby", typeof(LobbyInfo), "/lol-lobby/v2/lobby")]
         public event LeagueEventHandler<LobbyInfo>? LobbyInfoChanged;
+
+        [LeagueEventRepeater(LeagueEventType.SessionInfoChanged, "OnJsonApiEvent_lol-champ-select_v1_session", typeof(ChampSelectSession), "/lol-champ-select/v1/session")]
+        public event LeagueEventHandler<ChampSelectSession>? ChampSelectSessionChanged; 
 #pragma warning restore CS0067
 
         public LeagueEventService(ILcuApi api)
@@ -45,20 +49,20 @@ namespace LcuApiNet.Core.Events
                 throw new WampSocketExсeption($"Invalid wamp event message: [{message}]");
             }
             
-            foreach(KeyValuePair<LeagueEventRepeaterAttribute, EventInfo> elem in _events) {
-                if (elem.Key.Uri == @event.Uri) { 
-                    if (elem.Key.DataType.IsEnum) {
-                        object? enumValue = Enum.Parse(elem.Key.DataType, (string)@event.Data!);
-                        RaiseReflectionEvent(elem.Value, enumValue);
-                    } else if (elem.Key.DataType.IsPrimitive || elem.Key.DataType == typeof(string) || elem.Key.DataType == typeof(decimal)) { 
-                        RaiseReflectionEvent(elem.Value, @event.Data);
-                    } else {
-                        JObject? dataObject = (JObject?)@event.Data;
-                        RaiseReflectionEvent(elem.Value, dataObject?.ToObject(elem.Key.DataType));
-                    }
-
-                    return;
+            foreach((LeagueEventRepeaterAttribute attribute, EventInfo info) in _events) {
+                if (attribute.Uri != @event.Uri) 
+                    continue;
+                if (attribute.DataType.IsEnum) {
+                    object? enumValue = Enum.Parse(attribute.DataType, (string)@event.Data!);
+                    RaiseReflectionEvent(info, @event.InternalEventType, enumValue);
+                } else if (attribute.DataType.IsPrimitive || attribute.DataType == typeof(string) || attribute.DataType == typeof(decimal)) { 
+                    RaiseReflectionEvent(info, @event.InternalEventType, @event.Data);
+                } else {
+                    JObject? dataObject = (JObject?)@event.Data;
+                    RaiseReflectionEvent(info, @event.InternalEventType, dataObject?.ToObject(attribute.DataType));
                 }
+
+                return;
             }
         }
 
@@ -130,7 +134,7 @@ namespace LcuApiNet.Core.Events
             }
         }
 
-        private void RaiseReflectionEvent(EventInfo eventInfo, object? dataObject)
+        private void RaiseReflectionEvent(EventInfo eventInfo, LeagueInternalEventType eventType, object? dataObject)
         {
             FieldInfo? eventField = this.GetType().GetField(eventInfo.Name, BindingFlags.NonPublic | BindingFlags.Instance);
             MulticastDelegate? eventValue = (MulticastDelegate?)eventField!.GetValue(this);
@@ -138,7 +142,7 @@ namespace LcuApiNet.Core.Events
                 return;
             }
             foreach (Delegate elem in eventValue.GetInvocationList()) {
-                elem.Method?.Invoke(elem.Target, new object?[] { this, dataObject });
+                elem.Method?.Invoke(elem.Target, new object?[] { this, eventType, dataObject });
             }
         }
 

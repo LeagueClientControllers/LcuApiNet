@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using LcuApiNet.Core.Events;
 using LcuApiNet.Exceptions;
 using LcuApiNet.Model;
+using LcuApiNet.Model.Enums;
 using LcuApiNet.Utilities;
 using Newtonsoft.Json.Linq;
 using Websocket.Client;
@@ -33,7 +34,7 @@ public class WampSocketManager : IAsyncDisposable
                     
                 }
             };
-                        
+            
             socket.Options.AddSubProtocol("wamp");
             
             return socket;
@@ -73,7 +74,7 @@ public class WampSocketManager : IAsyncDisposable
         _wampEventHandler = action;
     }
 
-    public async Task<string> ExecuteAsync(string commandPath, HttpMethod method, string? payload = null)
+    public async Task<string> ExecuteAsync(string commandPath, HttpMethod method, string? payload = null, CancellationToken token = default)
     {
         EnsureWebSocketAvailable();
         if (_receiveExecutionResult != null) {
@@ -85,6 +86,7 @@ public class WampSocketManager : IAsyncDisposable
             ? $"[{(int) WampMessageType.Call}, \"{_sessionId}\", \"{method.Method} {commandPath}\"]"
             : $"[{(int) WampMessageType.Call}, \"{_sessionId}\", \"{method.Method} {commandPath}\", {payload}]");
 
+        token.Register(() => { _receiveExecutionResult.SetCanceled(token); }); 
         string response = await _receiveExecutionResult.Task.ConfigureAwait(false);
         _receiveExecutionResult = null;
         return response;
@@ -92,7 +94,7 @@ public class WampSocketManager : IAsyncDisposable
 
     private void MessageReceived(ResponseMessage message)
     {
-        Console.WriteLine(message.Text);
+        //Console.WriteLine(message.Text);
         JArray? eventArray = JArray.Parse(message.Text);
         if (eventArray == null) {
             throw new WampSocketExсeption("Error when parsing league wamp message");
@@ -114,7 +116,6 @@ public class WampSocketManager : IAsyncDisposable
 
     private void EnsureWebSocketAvailable()
     {
-        Console.WriteLine($"Is web socket created: [{_webSocket == null}]. Is web socket started: [{_webSocket != null && _webSocket.IsStarted}] Is web socket running: [{_webSocket != null && _webSocket.IsRunning}]");
         if(_webSocket == null || !_webSocket.IsRunning)
         {
             throw new ClientNotReadyException();

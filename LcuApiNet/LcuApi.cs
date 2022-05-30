@@ -17,6 +17,7 @@ using System.Text;
 using LcuApiNet.Utilities;
 using Newtonsoft.Json.Linq;
 using LcuApiNet.Core.Events;
+using LcuApiNet.EventHandlers;
 
 namespace LcuApiNet
 {
@@ -35,16 +36,28 @@ namespace LcuApiNet
         /// <inheritdoc />
         public MatchmakingCategory Matchmaking { get; }
 
+        public LobbyCategory Lobby { get; }
+
+        public SummonerCategory Summoner { get; }
+
         /// <inheritdoc />
-        public LeagueEventService Events { get; }
+        public LeagueEventService LeagueEvents { get; }
+        
+        public CustomEventService CustomEvents { get; }
+        
+        public PickCategory Pick { get;  }
 
         public LcuApi()
         {
-            Values      = new ValuesCategory(this);
-            Matchmaking = new MatchmakingCategory(this);
-            Socket      = new WampSocketManager();
-            Client      = new LeagueClientManager(this);
-            Events      = new LeagueEventService(this);
+            Values       = new ValuesCategory(this);
+            Matchmaking  = new MatchmakingCategory(this);
+            Lobby        = new LobbyCategory(this);
+            Summoner     = new SummonerCategory(this);
+            Socket       = new WampSocketManager();
+            Client       = new LeagueClientManager(this);
+            LeagueEvents = new LeagueEventService(this);
+            CustomEvents = new CustomEventService(this);
+            Pick         = new PickCategory(this);
         }  
 
 

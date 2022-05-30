@@ -1,6 +1,7 @@
 ﻿using LcuApiNet.Categories;
 using LcuApiNet.Core;
 using LcuApiNet.Core.Events;
+using LcuApiNet.EventHandlers;
 using LcuApiNet.Model.Enums;
 
 namespace LcuApiNet
@@ -30,11 +31,22 @@ namespace LcuApiNet
         /// Api category for matchmaking control.
         /// </summary>
         MatchmakingCategory Matchmaking { get; }
-        
+
+        LobbyCategory Lobby { get;  }
+
+        SummonerCategory Summoner { get; }
+
         /// <summary>
         /// 
         /// </summary>
-        LeagueEventService Events { get;  }
+        LeagueEventService LeagueEvents { get;  }
+        
+        CustomEventService CustomEvents { get; }
+        
+        /// <summary>
+        /// Api category for pick stage control. 
+        /// </summary>
+        PickCategory Pick { get;  }
 
         /// <summary>
         /// Initializes api module.

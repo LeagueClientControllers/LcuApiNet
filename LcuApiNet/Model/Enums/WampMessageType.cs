@@ -1,4 +1,4 @@
-﻿namespace LcuApiNet.Utilities;
+﻿namespace LcuApiNet.Model.Enums;
 
 public enum WampMessageType
 {

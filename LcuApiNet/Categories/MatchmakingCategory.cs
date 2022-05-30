@@ -44,5 +44,15 @@ namespace LcuApiNet.Categories
                 throw new WrongResponseException("When declining a match wrong exception arrived.");
             }
         }
+        
+        public async Task StartMatchmaking(CancellationToken token = default)
+        {
+            await _api.Socket.ExecuteAsync("/lol-lobby/v2/lobby/matchmaking/search", HttpMethod.Post);
+        }
+        
+        public async Task StopMatchmaking(CancellationToken token = default)
+        {
+            await _api.Socket.ExecuteAsync("/lol-lobby/v2/lobby/matchmaking/search", HttpMethod.Delete);
+        }
     }
 }

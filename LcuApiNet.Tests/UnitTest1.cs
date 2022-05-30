@@ -8,9 +8,8 @@ namespace LcuApiNet.Tests
         [SetUp]
         public void Setup()
         {
-            LeagueClientManager uCredentialsManager = new LeagueClientManager();
-            string path = uCredentialsManager.FindClientLocation().Result;
-            ;
+            // LeagueClientManager uCredentialsManager = new LeagueClientManager();
+            // string path = uCredentialsManager.FindClientLocation().Result;
         }
 
         [Test]

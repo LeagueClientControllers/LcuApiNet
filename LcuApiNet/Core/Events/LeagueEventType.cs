@@ -9,6 +9,7 @@ namespace LcuApiNet.Core.Events
     public enum LeagueEventType
     {
         GameflowPhaseChanged,
-        LobbyInfoChanged
+        LobbyInfoChanged,
+        SessionInfoChanged
     }
 }

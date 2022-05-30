@@ -26,7 +26,7 @@ namespace LcuApiNet.Categories
         /// <returns>Current <see cref="GameflowPhase"/></returns>
         public async Task<GameflowPhase> GetGameflowPhase(CancellationToken token = default)
         {
-            string phaseString = await _api.Socket.ExecuteAsync("/lol-gameflow/v1/gameflow-phase", HttpMethod.Get).ConfigureAwait(false);
+            string phaseString = await _api.Socket.ExecuteAsync("/lol-gameflow/v1/gameflow-phase", HttpMethod.Get, token: token).ConfigureAwait(false);
             
             try {
                 GameflowPhase phase = (GameflowPhase)Enum.Parse(typeof(GameflowPhase), _rQuote.Replace(phaseString, ""));
