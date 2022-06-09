@@ -31,9 +31,9 @@ public class CustomEventService
     private SessionAction[][] _previousSessionAction = Array.Empty<SessionAction[]>();
     private List<SessionAction> _currentPickingSelectPositions = new List<SessionAction>();
     private List<SessionAction> _previousPickingSelectPositions = new List<SessionAction>();    
-    
+   
     private List<SessionAction> _currentBanningSelectPositions = new List<SessionAction>();
-    private List<SessionAction> _previousBanningSelectPositions = new List<SessionAction>();    
+    private List<SessionAction> _previousBanningSelectPositions = new List<SessionAction>();
 
     
     private int _currentSessionActionCount;
@@ -83,8 +83,12 @@ public class CustomEventService
                     _userCellId = member.CellId;
                 }
             }
-
-            SessionAction inProgressSessionAction = args.Actions.Select(x => x.Where(s => s.IsInProgress).ToList()[0]).ToList()[0];
+       
+            SessionAction? inProgressSessionAction = new SessionAction();
+            if (!_isPlanningStage) {
+                inProgressSessionAction = args.Actions.Select(x => x.Where(s => s.IsInProgress).ToList()[0]).ToList()[0];
+            }
+            
             bool banStagePlanned = false;
             args.Actions.ToList().ForEach(x => x.ToList().ForEach(s => {
                 if (s.Type == ActionType.Ban) {
@@ -92,17 +96,24 @@ public class CustomEventService
                     return;
                 }
             }));
-
-            SelectStageStarted?.Invoke(sender, 
-                new SelectStageStartedEventArgs(allyPickOrder, args.MyTeam[0].TeamSide, args.TheirTeam.Length, 
-                    _userCellId < 5 ? _userCellId : _userCellId - 5, banStagePlanned,
-                    _isPlanningStage ? null : new ActionRequestedEventArgs(inProgressSessionAction.IsAllyAction,
-                        new[] {inProgressSessionAction.ActorCellId < 5 ? inProgressSessionAction.ActorCellId : inProgressSessionAction.ActorCellId - 5}, inProgressSessionAction.Type)));
             
-            _currentSessionActionCount = 0;
+            int userCellId = _userCellId < 5 ? _userCellId : _userCellId - 5;
+            ActionRequestedEventArgs? actionRequestedEventArgs = _isPlanningStage
+                ? null
+                : new ActionRequestedEventArgs(inProgressSessionAction.IsAllyAction,
+                    new[] {
+                        inProgressSessionAction.ActorCellId < 5
+                            ? inProgressSessionAction.ActorCellId
+                            : inProgressSessionAction.ActorCellId - 5
+                    }, inProgressSessionAction.Type);        
+            
+            SelectStageStarted?.Invoke(sender, 
+                new SelectStageStartedEventArgs(allyPickOrder, args.MyTeam[0].TeamSide, args.TheirTeam.Length, userCellId, banStagePlanned, actionRequestedEventArgs));
+            
             _isPlanningStage = false;
             _isSelectStageEnded = false;
             _userActionCompleted = false;
+            _currentSessionActionCount = 0;
             _currentPickingSelectPositions.Clear();
             _previousPickingSelectPositions.Clear();
             _currentBanningSelectPositions.Clear();
@@ -143,7 +154,7 @@ public class CustomEventService
         } else {
             newActions = args.Actions[_currentSessionActionCount..];
         }
-        
+
         _previousSessionAction = args.Actions;
         foreach (SessionAction[] actions in newActions) {
             foreach (SessionAction action in actions) {
@@ -162,8 +173,9 @@ public class CustomEventService
                     // }
                     if (action.IsInProgress) {
                         if (action.Type == ActionType.Pick) {
-                            if (_currentPickingSelectPositions.Where(a => a.Id == action.Id).ToList().Count == 0) {  
+                            if (_currentPickingSelectPositions.Where(a => a.Id == action.Id).ToList().Count == 0 || _currentPickingSelectPositions.Count == 0) {  
                                 _currentPickingSelectPositions.Add(action);
+
                             }
 
                             _isPickStage = true;
@@ -190,7 +202,7 @@ public class CustomEventService
                     _userActionCompleted = false;
                     ChampionPicked?.Invoke(sender, 
                         new ChampionPickedEventArgs(action.IsAllyAction, action.ActorCellId, action.ChampionId));
-                } else if (action.Type == ActionType.Ban) {
+                } else if (action.Type == ActionType.Ban && !_isPickStage) {
                     _userActionCompleted = false;
                     ChampionBanned?.Invoke(sender, 
                         new ChampionBannedEventArgs(action.ActorCellId, action.ChampionId));
@@ -224,6 +236,10 @@ public class CustomEventService
                 }
                 _previousBanningSelectPositions.AddRange(_currentBanningSelectPositions);
             }
+        }
+
+        if (_isPickStage) {
+            _currentBanningSelectPositions.Clear();
         }
         
         _currentSessionActionCount = args.Actions.Length;
