@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LcuApiNet.Tests", "LcuApiNet.Tests\LcuApiNet.Tests.csproj", "{2A326DDD-6C91-4FFC-B332-D4EAE1140089}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LcuApiNetConsoleTest", "LcuApiNetConsoleTest\LcuApiNetConsoleTest.csproj", "{4ED3A79A-1844-43E7-9BB9-E4BA7CF21A55}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LcuApiNet.Debugger", "LcuApiNet.Debugger\LcuApiNet.Debugger.csproj", "{5F890A0F-C9B3-4164-AC60-40365741678C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,10 +28,10 @@ Global
 		{2A326DDD-6C91-4FFC-B332-D4EAE1140089}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A326DDD-6C91-4FFC-B332-D4EAE1140089}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A326DDD-6C91-4FFC-B332-D4EAE1140089}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4ED3A79A-1844-43E7-9BB9-E4BA7CF21A55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ED3A79A-1844-43E7-9BB9-E4BA7CF21A55}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ED3A79A-1844-43E7-9BB9-E4BA7CF21A55}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ED3A79A-1844-43E7-9BB9-E4BA7CF21A55}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F890A0F-C9B3-4164-AC60-40365741678C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F890A0F-C9B3-4164-AC60-40365741678C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F890A0F-C9B3-4164-AC60-40365741678C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F890A0F-C9B3-4164-AC60-40365741678C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

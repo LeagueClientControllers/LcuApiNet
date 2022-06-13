@@ -3,14 +3,17 @@
 public delegate void ChampionBannedHandler(object sender, ChampionBannedEventArgs e);
 public class ChampionBannedEventArgs
 {
+    public bool IsAllyAction { get; }
+    
     public int PlayerSelectPosition { get; }
     
     public int ChampionId { get; }
 
-    public ChampionBannedEventArgs(int playerSelectPosition, int championId)
+    public ChampionBannedEventArgs(bool isAllyAction, int championId, int playerSelectPosition)
     {
-        PlayerSelectPosition = playerSelectPosition;
+        IsAllyAction = isAllyAction;
         ChampionId = championId;
+        PlayerSelectPosition = playerSelectPosition;
     }
     
 }
