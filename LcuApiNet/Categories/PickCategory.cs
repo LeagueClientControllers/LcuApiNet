@@ -58,7 +58,7 @@ public class PickCategory
             }
         }
     }
-
+    
     public async Task<ChampSelectSession> GetSessionInfoAsync(CancellationToken token = default)
     {
         string responseString = await _api.Socket.ExecuteAsync($"/lol-champ-select/v1/session", HttpMethod.Get, token: token)
@@ -66,6 +66,16 @@ public class PickCategory
         return JsonConvert.DeserializeObject<ChampSelectSession>(responseString)!;
     }
 
+    public async Task<int[]> GetAvailableChampionIds(CancellationToken token = default)
+    {
+        JArray responseArray = JArray.Parse(await _api.Socket.ExecuteAsync($"/lol-champ-select/v1/all-grid-champions",
+            HttpMethod.Get, token: token));
+
+        responseArray.Remove(responseArray[0]);
+
+        return (from t in responseArray where (bool) ((JValue) t.SelectToken("owned")!).Value! select Convert.ToInt32(((JValue) t.SelectToken("id")!).Value!)).ToArray();
+    }
+    
     public async Task<int> GetUserActionIdAsync(CancellationToken token = default)
     {
         ChampSelectSession sessionInfo = await GetSessionInfoAsync(token).ConfigureAwait(false);

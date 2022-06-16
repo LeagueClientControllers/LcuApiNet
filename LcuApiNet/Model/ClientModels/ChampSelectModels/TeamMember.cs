@@ -1,10 +1,13 @@
-﻿using Ardalis.SmartEnum.JsonNet;
+﻿using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using Ardalis.SmartEnum.JsonNet;
+using LcuApiNet.Annotations;
 using LcuApiNet.Model.Enums;
 using Newtonsoft.Json;
 
 namespace LcuApiNet.Model.ClientModels.ChampSelectModels;
 
-public class TeamMember
+public class TeamMember : INotifyPropertyChanged
 {
     [JsonProperty("assignedPosition")]
     public string AssignedPosition { get; set; }
@@ -21,8 +24,19 @@ public class TeamMember
     [JsonProperty("entitledFeatureType")]
     public string EntitledFeatureType { get; set; }
 
+    private int _selectedSkinId;
+
     [JsonProperty("selectedSkinId")]
-    public int SelectedSkinId { get; set; }
+    public int SelectedSkinId
+    {
+        get => _selectedSkinId;
+        set
+        {
+            if (_selectedSkinId == value) return;
+            _selectedSkinId = value;
+            OnPropertyChanged(nameof(SelectedSkinId));
+        }
+    }
 
     [JsonProperty("spell1Id")]
     public int Spell1Id { get; set; }
@@ -38,4 +52,17 @@ public class TeamMember
 
     [JsonProperty("wardSkinId")]
     public int WardSkinId { get; set; }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    [NotifyPropertyChangedInvocator]
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public void ApplyChanges(TeamMember other)
+    {
+        this.SelectedSkinId = other.SelectedSkinId;
+    }
 }

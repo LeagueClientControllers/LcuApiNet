@@ -10,16 +10,17 @@ public class SelectStageStartedEventArgs
     public int EnemiesCount { get; }
     public int UserPosition { get; }
     public bool UserOnBlueSide { get; }
-
     public bool BanStagePlanned { get; }
+    public int[] AvailableChampionIds { get; }
 
-    public SelectStageStartedEventArgs(List<SelectStageMember> allyPickOrder, bool userOnBlueSide, int enemiesCount, int userPosition,  bool banStagePlanned)
+    public SelectStageStartedEventArgs(List<SelectStageMember> allyPickOrder, bool userOnBlueSide, int enemiesCount, int userPosition,  bool banStagePlanned, int[] availableChampionIds)
     {
         AllyPickOrder  = allyPickOrder;
         UserOnBlueSide = userOnBlueSide;
         EnemiesCount   = enemiesCount;
         UserPosition   = userPosition;
         BanStagePlanned = banStagePlanned;
+        AvailableChampionIds = availableChampionIds;
     }
 }
 

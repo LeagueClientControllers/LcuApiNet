@@ -35,17 +35,18 @@ public class CustomEventService
 
     private TeamMember[] _previousAllyTeamInfo = Array.Empty<TeamMember>();
 
-    public ObservableCollection<SessionAction[]> CurrentSessionActionList = new ObservableCollection<SessionAction[]>();
+    private ObservableCollection<SessionAction[]> CurrentSessionActionList = new ObservableCollection<SessionAction[]>();
+    private List<TeamMember> CurrentTeamsData = new List<TeamMember>();
 
-    private int _currentSessionActionCount;
+    // private int _currentSessionActionCount;
     private int _userCellId = 0;
     private long _userId;
     
     private bool _isPlanningStage;
-    private bool _isBanningStage;
-    private bool _isPickStage = false;
-    private bool _userActionCompleted;
-    private bool _isSelectStageEnded;
+    // private bool _isBanningStage;
+    // private bool _isPickStage = false;
+    // private bool _userActionCompleted;
+    // private bool _isSelectStageEnded;
     private bool _champSelectInProgress;
     public CustomEventService(ILcuApi api)
     {
@@ -93,6 +94,8 @@ public class CustomEventService
                 AddSessionActions(sessionActions);
             }
 
+            AddTeamData(args.MyTeam);
+
             if (_isPlanningStage) {
                 
             }
@@ -104,52 +107,56 @@ public class CustomEventService
                     _userCellId = member.CellId;
                 }
             }
+            
+            int[] availableChampionIds = await _api.Pick.GetAvailableChampionIds().ConfigureAwait(false);
 
             SelectStageStarted?.Invoke(this, new SelectStageStartedEventArgs(allyPickOrder, args.MyTeam[0].TeamSide, 
                 args.TheirTeam.Length, _userCellId, 
-                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban))));
+                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban)), availableChampionIds));
 
             _isPlanningStage = false;
-            _isSelectStageEnded = false;
-            _userActionCompleted = false;
-            _currentSessionActionCount = 0;
+            // _isSelectStageEnded = false;
+            // _userActionCompleted = false;
+            // _currentSessionActionCount = 0;
         }
-        
-        TeamMember[] currentAllyTeamInfo = args.MyTeam;
-        
-        if (_previousAllyTeamInfo.Length == currentAllyTeamInfo.Length && eventType != LeagueInternalEventType.Create) {
-            if (!_previousAllyTeamInfo.SequenceEqual(currentAllyTeamInfo, TeamMemberComparer.Instance)) {
-                for (int i = 0; i < currentAllyTeamInfo.Length; i++) {
-                    if (currentAllyTeamInfo[i].SelectedSkinId != _previousAllyTeamInfo[i].SelectedSkinId) {
-                        ChampionSkinChanged?.Invoke(sender, new ChampionSkinChangedEventArgs(Convert.ToInt32(currentAllyTeamInfo[i].SelectedSkinId.ToString().Length > 3 ? currentAllyTeamInfo[i].SelectedSkinId.ToString()[^3..] : 0), 
-                            currentAllyTeamInfo[i].ChampionId, currentAllyTeamInfo[i].CellId));
-                    }
-                }
-            }
-        }
-        _previousAllyTeamInfo = currentAllyTeamInfo;
 
+        TeamMember[] test = Array.Empty<TeamMember>();
+        for (int i = 0; i < CurrentTeamsData.Count; i++) {
+            CurrentTeamsData[i].ApplyChanges(args.MyTeam[i]);
+        }
+        
+        
+        // TeamMember[] currentAllyTeamInfo = args.MyTeam;
+        //
+        // if (_previousAllyTeamInfo.Length == currentAllyTeamInfo.Length && eventType != LeagueInternalEventType.Create) {
+        //     if (!_previousAllyTeamInfo.SequenceEqual(currentAllyTeamInfo, TeamMemberComparer.Instance)) {
+        //         for (int i = 0; i < currentAllyTeamInfo.Length; i++) {
+        //             if (currentAllyTeamInfo[i].SelectedSkinId != _previousAllyTeamInfo[i].SelectedSkinId) {
+        //                 ChampionSkinChanged?.Invoke(sender, new ChampionSkinChangedEventArgs(Convert.ToInt32(currentAllyTeamInfo[i].SelectedSkinId.ToString().Length > 3 ? currentAllyTeamInfo[i].SelectedSkinId.ToString()[^3..] : 0), 
+        //                     currentAllyTeamInfo[i].ChampionId, currentAllyTeamInfo[i].CellId));
+        //             }
+        //         }
+        //     }
+        // }
+        // _previousAllyTeamInfo = currentAllyTeamInfo;
+        
         if (args.Actions.Length > CurrentSessionActionList.Count) {
             foreach (SessionAction[] sessionActions in args.Actions.Skip(CurrentSessionActionList.Count)) {     
                 AddSessionActions(sessionActions);
             }
         }
-
+        
         for (int i = 0; i < CurrentSessionActionList.Count; i++) {
             for (int j = 0; j < CurrentSessionActionList[i].Length; j++) {
                 CurrentSessionActionList[i][j].ApplyChanges(args.Actions[i][j]);
             }
         }
+
         
         if (args.Timer.Phase == "BAN_PICK" && _isPlanningStage) {
             _isPlanningStage = false;
             ActionRequested?.Invoke(this,new ActionRequestedEventArgs(true, 
                 args.MyTeam.Select(m => GetActualActorId(m.CellId)).ToArray(), ActionType.Ban));
-            //
-            // for (int i = 0; i < args.Bans.TheirTeamBans.Length; i++) {
-            //     int championId = args.Bans.TheirTeamBans[i];
-            //     ChampionBanned?.Invoke(this, new ChampionBannedEventArgs(false, championId, i));
-            // }
         }
     }
 
@@ -159,6 +166,14 @@ public class CustomEventService
             sessionAction.PropertyChanged += (o, e) => OnSessionActionChanged((o! as SessionAction)!, e.PropertyName!);
         }
         CurrentSessionActionList.Add(sessionActions);
+    }
+
+    private void AddTeamData(TeamMember[] team)
+    {
+        foreach (TeamMember member in team) {
+            member.PropertyChanged += (o, e) => OnTeamMemberChanged((o! as TeamMember)!, e.PropertyName!);
+        }
+        CurrentTeamsData.AddRange(team);
     }
 
     private void OnSessionActionChanged(SessionAction sender, string propertyName)
@@ -202,6 +217,18 @@ public class CustomEventService
                 }
                 break;
         }
+    }
+
+    private void OnTeamMemberChanged(TeamMember sender, string propertyName)
+    {
+        sender.CellId = sender.CellId < 5 ? sender.CellId : sender.CellId - 5;
+
+        switch (propertyName) {
+            case nameof(TeamMember.SelectedSkinId):
+                ChampionSkinChanged?.Invoke(this, new ChampionSkinChangedEventArgs(Convert.ToInt32(sender.SelectedSkinId.ToString().Length > 3 ? sender.SelectedSkinId.ToString()[^3..] : 0), sender.ChampionId, sender.CellId));
+                break;
+        }
+        
     }
 
     private int GetActualActorId(int cellId) =>
