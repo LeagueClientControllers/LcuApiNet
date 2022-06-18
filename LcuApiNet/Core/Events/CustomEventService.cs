@@ -109,10 +109,11 @@ public class CustomEventService
             }
             
             int[] availableChampionIds = await _api.Pick.GetAvailableChampionIds().ConfigureAwait(false);
+            QueueType queueType = await _api.Lobby.GetQueueType().ConfigureAwait(false);
 
             SelectStageStarted?.Invoke(this, new SelectStageStartedEventArgs(allyPickOrder, args.MyTeam[0].TeamSide, 
                 args.TheirTeam.Length, _userCellId, 
-                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban)), availableChampionIds));
+                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban)), queueType, availableChampionIds));
 
             _isPlanningStage = false;
             // _isSelectStageEnded = false;
