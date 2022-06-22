@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Diagnostics;
+using System.Net.Http.Json;
 using LcuApiNet.EventHandlers.PickStage;
 using LcuApiNet.Exceptions;
 using LcuApiNet.Model;
@@ -29,10 +30,9 @@ public class PickCategory
     public async Task LockChampion(int sessionActionId, CancellationToken token = default)
     {
         try {
-            await _api.Socket.ExecuteAsync($"/lol-champ-select/v1/session/actions/{sessionActionId}", HttpMethod.Patch, $"{{\"completed\": true}}", token).ConfigureAwait(false);
-        }
-        catch (ApiCommandException e) {
-            Console.WriteLine(e);
+            await _api.Socket.ExecuteAsync($"/lol-champ-select/v1/session/actions/{sessionActionId}/complete", HttpMethod.Post, token: token).ConfigureAwait(false);
+        } catch (ApiCommandException e) {
+            Debug.WriteLine(e.Message);
         }
     }
 
@@ -51,11 +51,9 @@ public class PickCategory
         
         try {
             await _api.Socket.ExecuteAsync($"/lol-champ-select/v1/session/actions/{sessionActionId}", HttpMethod.Patch,
-                $"{{\"completed\": false, \"championId\": {championId}}}", token).ConfigureAwait(false);
+                $"{{\"championId\": {championId}}}", token).ConfigureAwait(false);
         } catch (ApiCommandException e) {
-            if (e.Details.Code == ErrorCode.InternalError) {
-                
-            }
+            Debug.WriteLine(e.Message);
         }
     }
     

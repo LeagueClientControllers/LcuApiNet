@@ -80,7 +80,6 @@ public class SessionAction : INotifyPropertyChanged
     {
         this.Id = other.Id;
         this.ChampionId = other.ChampionId;
-        this.ActorCellId = other.ActorCellId;
         this.Completed = other.Completed;
         this.Type = other.Type;
         this.IsAllyAction = other.IsAllyAction;

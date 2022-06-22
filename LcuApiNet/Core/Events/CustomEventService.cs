@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Threading.Channels;
@@ -10,6 +11,8 @@ using LcuApiNet.Model.ClientModels.ChampSelectModels;
 using LcuApiNet.Model.Enums;
 using LcuApiNet.Utilities;
 using LcuApiNet.Utilities.Converters;
+
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
 namespace LcuApiNet.Core.Events;
@@ -18,11 +21,6 @@ public class CustomEventService
 {
     private ILcuApi _api;
 
-    #region MyRegion
-
-    
-
-    #endregion
     public event SelectStageStartedHandler? SelectStageStarted;
     public event ChampionHoveredHandler? ChampionHovered;
     public event ChampionBannedHandler? ChampionBanned;
@@ -94,12 +92,10 @@ public class CustomEventService
                 AddSessionActions(sessionActions);
             }
 
+            CurrentTeamsData.Clear();
             AddTeamData(args.MyTeam);
 
-            if (_isPlanningStage) {
-                
-            }
-            
+            Debug.WriteLine(JsonConvert.SerializeObject(args.Actions, Formatting.Indented));
             List<SelectStageMember> allyPickOrder = new List<SelectStageMember>();
             foreach (TeamMember member in args.MyTeam) {
                 allyPickOrder.Add(new SelectStageMember(member.SummonerId.ToString(), member.AssignedPosition == "" ? Role.Any : RoleConverter.FromStringToEnum(member.AssignedPosition)));
@@ -111,16 +107,21 @@ public class CustomEventService
             int[] availableChampionIds = await _api.Pick.GetAvailableChampionIds().ConfigureAwait(false);
             QueueType queueType = await _api.Lobby.GetQueueType().ConfigureAwait(false);
 
-            SelectStageStarted?.Invoke(this, new SelectStageStartedEventArgs(allyPickOrder, args.MyTeam[0].TeamSide, 
-                args.TheirTeam.Length, _userCellId, 
-                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban)), queueType, availableChampionIds));
+            SelectStageStarted?.Invoke(this, new SelectStageStartedEventArgs(allyPickOrder, 
+                args.MyTeam[0].TeamSide, args.TheirTeam.Length, _userCellId, 
+                args.Actions.Any(sa => sa.Any(a => a.Type == ActionType.Ban)), 
+                queueType, availableChampionIds, 
+                CurrentSessionActionList.SelectMany(a => a)
+                    .First(a => 
+                        a.ActorCellId == _userCellId && a.IsAllyAction && a.Type == ActionType.Pick).Id));
 
             _isPlanningStage = false;
+
             // _isSelectStageEnded = false;
             // _userActionCompleted = false;
             // _currentSessionActionCount = 0;
         }
-
+        
         TeamMember[] test = Array.Empty<TeamMember>();
         for (int i = 0; i < CurrentTeamsData.Count; i++) {
             CurrentTeamsData[i].ApplyChanges(args.MyTeam[i]);
@@ -157,13 +158,17 @@ public class CustomEventService
         if (args.Timer.Phase == "BAN_PICK" && _isPlanningStage) {
             _isPlanningStage = false;
             ActionRequested?.Invoke(this,new ActionRequestedEventArgs(true, 
-                args.MyTeam.Select(m => GetActualActorId(m.CellId)).ToArray(), ActionType.Ban));
+                args.MyTeam.Select(m => GetActorPosition(m.CellId)).ToArray(), ActionType.Ban));
+            UserActionRequested?.Invoke(this, new UserActionRequestedEventArgs(
+                CurrentSessionActionList.SelectMany(a => a).First(a => a.Type == ActionType.Ban && a.ActorCellId == _userCellId && a.IsAllyAction).Id,
+                ActionType.Ban));
         }
     }
 
     private void AddSessionActions(SessionAction[] sessionActions)
     {
         foreach (SessionAction sessionAction in sessionActions) {
+            sessionAction.ActorCellId = GetActorPosition(sessionAction.ActorCellId);
             sessionAction.PropertyChanged += (o, e) => OnSessionActionChanged((o! as SessionAction)!, e.PropertyName!);
         }
         CurrentSessionActionList.Add(sessionActions);
@@ -172,6 +177,7 @@ public class CustomEventService
     private void AddTeamData(TeamMember[] team)
     {
         foreach (TeamMember member in team) {
+            member.CellId = GetActorPosition(member.CellId);
             member.PropertyChanged += (o, e) => OnTeamMemberChanged((o! as TeamMember)!, e.PropertyName!);
         }
         CurrentTeamsData.AddRange(team);
@@ -179,11 +185,11 @@ public class CustomEventService
 
     private void OnSessionActionChanged(SessionAction sender, string propertyName)
     {
-        //Console.WriteLine($"[DEBUG] sender = |{sender.ActorCellId}, {sender.Type}|, propertyName = {propertyName}");
-        sender.ActorCellId = sender.ActorCellId < 5 ? sender.ActorCellId : sender.ActorCellId - 5;
-               
         switch (propertyName) {
             case nameof(SessionAction.ChampionId):
+                if (!sender.IsAllyAction) {
+                    break;
+                }
                 ChampionHovered?.Invoke(this, new ChampionHoveredEventArgs(sender.IsAllyAction, 
                     sender.ActorCellId, sender.ChampionId, sender.Type, sender.Id));
                 break;
@@ -194,36 +200,33 @@ public class CustomEventService
                 } else if (sender.Type == ActionType.Pick) {
                     ChampionPicked?.Invoke(this, new ChampionPickedEventArgs(sender.IsAllyAction, sender.ActorCellId, sender.ChampionId));
                 }
-
                 break;
             
             case nameof(SessionAction.IsInProgress):
-                if (sender.IsInProgress && sender.Type != ActionType.TenBansReveal) {
-                    foreach (SessionAction[] sessionActions in CurrentSessionActionList) {
-                        if (!sessionActions.Contains(sender)) {
-                            continue;
-                        }
-                        
-                        int[] actors = sessionActions
-                            .Select(a => GetActualActorId(a.ActorCellId)).OrderBy(p => p).ToArray();
-                        
-                        SessionAction? userAction = sessionActions.FirstOrDefault(a => a.ActorCellId == _userId);
-                        if (userAction != null) {
-                            UserActionRequested?.Invoke(this, new UserActionRequestedEventArgs(userAction.Id, userAction.Type));
-                        }
-                        
-                        ActionRequested?.Invoke(this, new ActionRequestedEventArgs(sender.IsAllyAction, actors, sender.Type));
-                        break;
-                    }
+                if (!sender.IsInProgress || sender.Type == ActionType.TenBansReveal) {
+                    break;
                 }
+                
+                SessionAction[] actions = CurrentSessionActionList.First(a => a.Contains(sender));
+                if (Array.IndexOf(actions, sender) > 0) {
+                    break;
+                }
+                
+                int[] actors = actions
+                    .Select(a => GetActorPosition(a.ActorCellId)).OrderBy(p => p).ToArray();
+                
+                SessionAction? userAction = actions.FirstOrDefault(a => a.ActorCellId == _userCellId && a.IsAllyAction);
+                if (userAction != null) {
+                    UserActionRequested?.Invoke(this, new UserActionRequestedEventArgs(userAction.Id, userAction.Type));
+                }
+                
+                ActionRequested?.Invoke(this, new ActionRequestedEventArgs(sender.IsAllyAction, actors, sender.Type));
                 break;
         }
     }
 
     private void OnTeamMemberChanged(TeamMember sender, string propertyName)
     {
-        sender.CellId = sender.CellId < 5 ? sender.CellId : sender.CellId - 5;
-
         switch (propertyName) {
             case nameof(TeamMember.SelectedSkinId):
                 ChampionSkinChanged?.Invoke(this, new ChampionSkinChangedEventArgs(Convert.ToInt32(sender.SelectedSkinId.ToString().Length > 3 ? sender.SelectedSkinId.ToString()[^3..] : 0), sender.ChampionId, sender.CellId));
@@ -232,7 +235,7 @@ public class CustomEventService
         
     }
 
-    private int GetActualActorId(int cellId) =>
-        cellId > 5 ? cellId - 5 : cellId;
+    private int GetActorPosition(int cellId) =>
+        cellId >= 5 ? cellId - 5 : cellId;
 
 }

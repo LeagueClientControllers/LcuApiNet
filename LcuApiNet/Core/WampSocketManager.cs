@@ -77,8 +77,8 @@ public class WampSocketManager : IAsyncDisposable
     public async Task<string> ExecuteAsync(string commandPath, HttpMethod method, string? payload = null, CancellationToken token = default)
     {
         EnsureWebSocketAvailable();
-        if (_receiveExecutionResult != null) {
-            throw new InvalidOperationException("Unaible to execute method while previous execution wasn't completed.");
+        if (_receiveExecutionResult != null && !_receiveExecutionResult.Task.IsFaulted) {
+            throw new InvalidOperationException("Unable to execute method while previous execution wasn't completed.");
         }
 
         _receiveExecutionResult = new TaskCompletionSource<string>();

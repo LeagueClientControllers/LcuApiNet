@@ -13,8 +13,10 @@ public class SelectStageStartedEventArgs
     public bool BanStagePlanned { get; }
     public QueueType QueueType { get; }
     public int[] AvailableChampionIds { get; }
+    
+    public int? UserPickActionId { get; }
 
-    public SelectStageStartedEventArgs(List<SelectStageMember> allyPickOrder, bool userOnBlueSide, int enemiesCount, int userPosition,  bool banStagePlanned,  QueueType queueType, int[] availableChampionIds)
+    public SelectStageStartedEventArgs(List<SelectStageMember> allyPickOrder, bool userOnBlueSide, int enemiesCount, int userPosition,  bool banStagePlanned,  QueueType queueType, int[] availableChampionIds, int? userPickActionId = null)
     {
         AllyPickOrder  = allyPickOrder;
         UserOnBlueSide = userOnBlueSide;
@@ -23,6 +25,7 @@ public class SelectStageStartedEventArgs
         BanStagePlanned = banStagePlanned;
         QueueType = queueType;
         AvailableChampionIds = availableChampionIds;
+        UserPickActionId = userPickActionId;
     }
 }
 
